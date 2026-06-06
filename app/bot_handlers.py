@@ -14,14 +14,31 @@ router = Router()
 # Initialize the Match Predictor AI
 predictor = MatchPredictor()
 
+import asyncio
+
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
     """
     Handle the /start command.
     """
-    await message.answer(
-        "Xin chào! Tôi là Trợ lý AI dự đoán World Cup 2026. Hệ thống đang đồng bộ dữ liệu, vui lòng chờ trong giây lát..."
+    msg = await message.answer("⏳ Hệ thống đang khởi động và đồng bộ dữ liệu AI, vui lòng chờ trong giây lát...")
+    
+    # Simulate a brief delay to give a professional feel
+    await asyncio.sleep(1.5)
+    
+    welcome_text = (
+        "✅ *Khởi động hoàn tất!*\n\n"
+        "Xin chào! Tôi là **Trợ lý AI Dự đoán World Cup 2026** 🏆🤖\n\n"
+        "Tôi có khả năng phân tích phong độ, tra cứu lịch thi đấu thực tế và tính toán tỷ lệ chiến thắng bằng Machine Learning.\n\n"
+        "👉 *Xin mời bạn chọn các tính năng dưới đây để bắt đầu trải nghiệm:*\n\n"
+        "📅 /schedule - Xem lịch thi đấu & Đặt cược dự đoán\n"
+        "🔮 /predict `[Đội 1]` vs `[Đội 2]` - Nhờ AI dự đoán nhanh\n"
+        "📊 /stats - Xem bảng xếp hạng niềm tin của cộng đồng\n"
+        "📜 /history - Xem lại lịch sử dự đoán của bạn\n"
+        "❓ /help - Hỗ trợ và liên hệ Admin"
     )
+    
+    await msg.edit_text(welcome_text, parse_mode=ParseMode.MARKDOWN)
 
 @router.message(Command("help"))
 async def cmd_help(message: types.Message):

@@ -32,6 +32,13 @@ Bot Telegram dự đoán tỉ số World Cup 2026 bằng mô hình Machine Learn
    ```
    Hệ thống sẽ tự động tải MongoDB, Redis và khởi chạy Bot (chạy ngầm).
 
+## 🎛️ Các Lệnh Quản Lý Bằng Docker
+- **Bật Bot:** `docker-compose up -d`
+- **Tắt Bot (Không mất dữ liệu):** `docker-compose down`
+- **Khởi động lại & Cập nhật code mới:** `docker-compose up -d --build`
+- **Xem trạng thái các máy ảo đang chạy:** `docker ps`
+- **Xem Nhật ký tin nhắn (Logs) của Bot:** `docker logs worldcup_bot -f` (Bấm Ctrl+C để thoát)
+
 ## 💡 Lưu Ý Về Tài Nguyên (RAM / CPU)
 - Dự án này bao gồm cả một mô hình Machine Learning được load thẳng vào RAM, cộng thêm 2 Database (MongoDB và Redis). 
 - Khuyến nghị VPS nên có tối thiểu **1GB - 2GB RAM**.
