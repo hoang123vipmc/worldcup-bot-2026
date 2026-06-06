@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:5000", "app.main:app"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5000"]
