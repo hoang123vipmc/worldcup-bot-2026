@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+aiogram
+pandas
+scikit-learn
+pymongo
+redis
+python-dotenv
+gunicorn
