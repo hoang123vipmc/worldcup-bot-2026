@@ -49,11 +49,14 @@ async def cmd_help(message: types.Message):
     help_text = (
         "🤖 *DANH SÁCH CÁC LỆNH:*\n\n"
         "🔹 /start: Khởi động lại bot.\n"
+        "🔹 /live: Xem tỷ số trực tiếp và đội hình ra sân.\n"
         "🔹 /schedule: Xem lịch thi đấu World Cup 2026.\n"
         "🔹 /predict [Đội 1] vs [Đội 2]: Dự đoán nhanh bằng AI.\n"
         "🔹 /history: Xem lịch sử dự đoán.\n"
         "🔹 /stats: Xem thống kê dự đoán cộng đồng.\n"
-        "🔹 /help: Xem hướng dẫn sử dụng."
+        "🔹 /help: Xem hướng dẫn sử dụng.\n\n"
+        "⚠️ *LƯU Ý QUAN TRỌNG:*\n"
+        "_Đây là dự đoán dựa trên mô hình Trí tuệ Nhân tạo (AI) học từ dữ liệu thống kê lịch sử. Thông tin chỉ mang tính chất tham khảo giải trí, hoàn toàn KHÔNG PHẢI là lời khuyên cá cược._"
     )
     
     # Create inline button linking to admin

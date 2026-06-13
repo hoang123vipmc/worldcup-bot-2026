@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 # Import bot handlers
 from app.bot_handlers import router
+from app.middlewares import RateLimitMiddleware
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +21,9 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 # Initialize Bot and Dispatcher
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+
+# Register Rate Limiting Middleware
+dp.message.middleware(RateLimitMiddleware(limit=10, window=60))
 
 # Register the router from bot_handlers
 dp.include_router(router)
