@@ -86,3 +86,79 @@ async def get_upcoming_matches():
     """
     # Use asyncio.to_thread to run the synchronous requests.get() in a separate thread
     return await asyncio.to_thread(get_real_upcoming_matches)
+
+def get_real_live_matches():
+    try:
+        url = "https://api.football-data.org/v4/competitions/WC/matches"
+        headers = {'X-Auth-Token': os.getenv('API_KEY', '')}
+        # Thử lấy trận đang đá, nếu không có lấy trận vừa kết thúc để demo
+        params = {'status': 'IN_PLAY,PAUSED,FINISHED'}
+        response = requests.get(url, headers=headers, params=params)
+        
+        if response.status_code != 200:
+            return []
+            
+        data = response.json()
+        matches = []
+        
+        for match in data.get('matches', []):
+            status = match.get('status')
+            home_team = match.get('homeTeam', {}).get('name')
+            away_team = match.get('awayTeam', {}).get('name')
+            score = match.get('score', {}).get('fullTime', {})
+            home_score = score.get('home') if score.get('home') is not None else 0
+            away_score = score.get('away') if score.get('away') is not None else 0
+            minute = match.get('minute', 'FT' if status == 'FINISHED' else 'Live')
+            
+            matches.append({
+                "match_id": match.get('id'),
+                "status": status,
+                "home_team": home_team or 'TBA',
+                "away_team": away_team or 'TBA',
+                "home_score": home_score,
+                "away_score": away_score,
+                "minute": minute
+            })
+            
+            # Ưu tiên lấy các trận gần đây nhất
+            if len(matches) >= 5:
+                break
+                
+        # Sắp xếp các trận đang đá lên trên cùng
+        matches.sort(key=lambda x: 0 if x['status'] in ['IN_PLAY', 'PAUSED'] else 1)
+        return matches[:3]
+    except Exception as e:
+        logger.error(f"Error fetching live matches: {e}")
+        return []
+
+def get_real_match_lineup(match_id):
+    try:
+        url = f"https://api.football-data.org/v4/matches/{match_id}"
+        headers = {'X-Auth-Token': os.getenv('API_KEY', '')}
+        response = requests.get(url, headers=headers)
+        
+        if response.status_code != 200:
+            return None
+            
+        data = response.json()
+        home_team = data.get('homeTeam', {})
+        away_team = data.get('awayTeam', {})
+        
+        home_lineup = [p.get('name') for p in home_team.get('lineup', [])]
+        away_lineup = [p.get('name') for p in away_team.get('lineup', [])]
+        
+        return {
+            "home_name": home_team.get('name'),
+            "away_name": away_team.get('name'),
+            "home_lineup": home_lineup,
+            "away_lineup": away_lineup
+        }
+    except Exception as e:
+        logger.error(f"Error fetching lineup for {match_id}: {e}")
+        return None
+
+async def get_live_matches():
+    return await asyncio.to_thread(get_real_live_matches)
+
+async def get_match_lineup(match_id):
+    return await asyncio.to_thread(get_real_match_lineup, match_id)

@@ -4,6 +4,7 @@ Bot Telegram dự đoán tỉ số World Cup 2026 bằng mô hình Machine Learn
 
 ## 🚀 Tính Năng Nổi Bật
 - **`/start`**: Khởi động Bot.
+- **`/live`**: Xem tỷ số trực tiếp và đội hình ra sân của các trận đấu đang diễn ra.
 - **`/schedule`**: Lấy lịch thi đấu World Cup thực tế từ API (Football-Data.org) với định dạng giờ Việt Nam và thông tin sân vận động.
 - **`/predict [Đội 1] vs [Đội 2]`**: Dự báo tỷ lệ thắng/hòa/thua giữa 2 đội bất kỳ bằng AI.
 - **`/history`**: Xem lại lịch sử các trận đấu bạn đã dự đoán.

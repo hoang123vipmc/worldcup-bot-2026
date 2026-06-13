@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
 
 from ml_core.predictor import MatchPredictor
-from app.external_api import get_upcoming_matches
+from app.external_api import get_upcoming_matches, get_live_matches, get_match_lineup
 from app.database import save_prediction, get_user_history, get_global_stats
 
 # Initialize the router for bot handlers
@@ -31,6 +31,7 @@ async def cmd_start(message: types.Message):
         "Xin chào! Tôi là **Trợ lý AI Dự đoán World Cup 2026** 🏆🤖\n\n"
         "Tôi có khả năng phân tích phong độ, tra cứu lịch thi đấu thực tế và tính toán tỷ lệ chiến thắng bằng Machine Learning.\n\n"
         "👉 *Xin mời bạn chọn các tính năng dưới đây để bắt đầu trải nghiệm:*\n\n"
+        "📺 /live - Xem tỷ số trực tiếp & Đội hình ra sân\n"
         "📅 /schedule - Xem lịch thi đấu & Đặt cược dự đoán\n"
         "🔮 /predict `[Đội 1]` vs `[Đội 2]` - Nhờ AI dự đoán nhanh\n"
         "📊 /stats - Xem bảng xếp hạng niềm tin của cộng đồng\n"
@@ -264,3 +265,114 @@ async def callback_predict(callback: types.CallbackQuery):
             
     except Exception as e:
         await callback.answer(text="⚠️ Đã có lỗi xảy ra trong quá trình dự đoán.", show_alert=True)
+
+@router.message(Command("live"))
+async def cmd_live(message: types.Message):
+    """
+    Handle the /live command to show live matches.
+    """
+    msg = await message.answer("⏳ Đang tải dữ liệu trực tiếp...")
+    
+    live_matches = await get_live_matches()
+    
+    if not live_matches:
+        await msg.edit_text("⏸️ Hiện tại không có trận đấu nào đang diễn ra hoặc đã kết thúc gần đây.")
+        return
+        
+    for match in live_matches:
+        match_id = match['match_id']
+        home = match['home_team']
+        away = match['away_team']
+        h_score = match['home_score']
+        a_score = match['away_score']
+        minute = match['minute']
+        status = match['status']
+        
+        icon = "🔴" if status in ['IN_PLAY', 'PAUSED'] else "🏁"
+        
+        text = (
+            f"{icon} *{minute}'* | {status}\n"
+            f"*{home}*  {h_score} - {a_score}  *{away}*"
+        )
+        
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🔄 Làm mới tỷ số", callback_data="refresh_live"),
+                InlineKeyboardButton(text="📋 Xem Đội Hình", callback_data=f"lineup_{match_id}")
+            ]
+        ])
+        
+        await message.answer(text, parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+        
+    await msg.delete()
+
+@router.callback_query(F.data == "refresh_live")
+async def callback_refresh_live(callback: types.CallbackQuery):
+    """
+    Handle refresh button for live scores.
+    """
+    live_matches = await get_live_matches()
+    
+    if not live_matches:
+        await callback.message.edit_text("⏸️ Hiện tại không có trận đấu nào đang diễn ra hoặc đã kết thúc gần đây.")
+        return
+        
+    # Lấy trận đấu tương ứng (giả định tin nhắn hiện tại là trận đầu tiên hoặc làm mới lại y hệt)
+    # Vì mỗi tin nhắn là 1 trận, việc làm mới có thể hơi phức tạp nếu thay đổi toàn bộ, 
+    # Nhưng để đơn giản, ta xoá tin nhắn cũ và in lại trận mới nhất
+    await callback.message.delete()
+    
+    for match in live_matches:
+        match_id = match['match_id']
+        home = match['home_team']
+        away = match['away_team']
+        h_score = match['home_score']
+        a_score = match['away_score']
+        minute = match['minute']
+        status = match['status']
+        
+        icon = "🔴" if status in ['IN_PLAY', 'PAUSED'] else "🏁"
+        
+        text = (
+            f"{icon} *{minute}'* | {status}\n"
+            f"*{home}*  {h_score} - {a_score}  *{away}*"
+        )
+        
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🔄 Làm mới tỷ số", callback_data="refresh_live"),
+                InlineKeyboardButton(text="📋 Xem Đội Hình", callback_data=f"lineup_{match_id}")
+            ]
+        ])
+        
+        await callback.message.answer(text, parse_mode=ParseMode.MARKDOWN, reply_markup=keyboard)
+        
+    await callback.answer("Đã cập nhật tỷ số mới nhất! ✅")
+
+@router.callback_query(F.data.startswith("lineup_"))
+async def callback_lineup(callback: types.CallbackQuery):
+    """
+    Handle callback when user clicks 'Xem Đội Hình'.
+    """
+    match_id = callback.data.split("_")[1]
+    
+    await callback.answer(text="Đang tải đội hình...")
+    
+    lineup_data = await get_match_lineup(match_id)
+    
+    if not lineup_data or not lineup_data.get('home_lineup'):
+        await callback.message.answer("⚠️ Dữ liệu đội hình chưa được cập nhật cho trận đấu này.")
+        return
+        
+    home = lineup_data['home_name']
+    away = lineup_data['away_name']
+    h_lineup = ", ".join(lineup_data['home_lineup'])
+    a_lineup = ", ".join(lineup_data['away_lineup'])
+    
+    text = (
+        f"📋 *ĐỘI HÌNH THI ĐẤU*\n\n"
+        f"🛡️ *{home}:*\n_{h_lineup}_\n\n"
+        f"🛡️ *{away}:*\n_{a_lineup}_"
+    )
+    
+    await callback.message.answer(text, parse_mode=ParseMode.MARKDOWN)
